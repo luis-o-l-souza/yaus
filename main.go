@@ -3,21 +3,27 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
 	"net/http"
+	"os"
 	"yaus/controllers"
-)
 
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "yaus"
-	password = "root"
-	dbname   = "yaus"
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		panic("No env file")
+	}
+	var (
+		host     = os.Getenv("DB_HOST")
+		port     = 5432
+		user     = os.Getenv("POSTGRES_DB_USER")
+		password = os.Getenv("POSTGRES_DB_PWD")
+		dbname   = os.Getenv("POSTGRES_DB")
+	)
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
@@ -46,8 +52,9 @@ func main() {
 		})
 	})
 	shortenerController := controllers.NewShortenController(db)
+	redirectController := controllers.NewRedirectController(db)
 	r.POST("/shorten", shortenerController.Shorten)
-	r.GET("/:shortedUrl", controllers.Redirect)
+	r.GET("/:shortedUrl", redirectController.Redirect)
 	// Start server on port 8080 (default)
 	// Server will listen on 0.0.0.0:8080 (localhost:8080 on Windows)
 	r.Run()
