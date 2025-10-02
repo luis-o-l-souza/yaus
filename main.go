@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+
 	"yaus/controllers"
+	"yaus/services/implementations"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -24,18 +26,17 @@ func main() {
 		password = os.Getenv("POSTGRES_DB_PWD")
 		dbname   = os.Getenv("POSTGRES_DB")
 	)
+
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 
 	db, err := sql.Open("postgres", psqlInfo)
-
 	if err != nil {
 		panic(err)
 	}
 
 	err = db.Ping()
-
 	if err != nil {
 		panic(err)
 	}
@@ -51,8 +52,9 @@ func main() {
 			"message": "pong",
 		})
 	})
-	shortenerController := controllers.NewShortenController(db)
-	redirectController := controllers.NewRedirectController(db)
+	urlMapRepository := implementations.NewUrlMapRepository(db)
+	shortenerController := controllers.NewShortenController(urlMapRepository)
+	redirectController := controllers.NewRedirectController(urlMapRepository)
 	r.POST("/shorten", shortenerController.Shorten)
 	r.GET("/:shortedUrl", redirectController.Redirect)
 	// Start server on port 8080 (default)

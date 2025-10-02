@@ -1,28 +1,37 @@
 package controllers
 
 import (
-	"database/sql"
 	"net/http"
+	"yaus/services/model"
+	"yaus/services/repositories"
 
 	"github.com/gin-gonic/gin"
 )
 
 type ShortenController struct {
-	db *sql.DB
+	u repositories.UrlMapRepository
 }
 
-func NewShortenController(db *sql.DB) *ShortenController {
-	return &ShortenController{db}
+func NewShortenController(u repositories.UrlMapRepository) *ShortenController {
+	return &ShortenController{u: u}
 }
 
 func (s *ShortenController) Shorten(c *gin.Context) {
-	str := "INSERT INTO url_maps (short_url,long_url) VALUES ($1, $2)"
-	_, err := s.db.Exec(str, "test", "test")
+	var body model.UrlMapPayload
+	if err := c.ShouldBindBodyWithJSON(&body); err != nil {
+		c.Error(err)
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	shortedUrl, err := s.u.Create(body)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.Error(err)
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
 	} else {
 		c.JSON(http.StatusCreated, gin.H{
-			"shortedUrl": "urlTest",
+			"shortedUrl": shortedUrl,
 		})
+		return
 	}
 }
