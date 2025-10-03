@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
+
 	"yaus/services/model"
 	"yaus/services/repositories"
 
@@ -19,8 +22,19 @@ func NewShortenController(u repositories.UrlMapRepository) *ShortenController {
 func (s *ShortenController) Shorten(c *gin.Context) {
 	var body model.UrlMapPayload
 	if err := c.ShouldBindBodyWithJSON(&body); err != nil {
-		c.Error(err)
-		c.AbortWithStatus(http.StatusBadRequest)
+		errorMsg := err.Error()
+		if errorMsg == "EOF" {
+			errorMsg = "Invalid JSON"
+		}
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": errorMsg,
+		})
+		return
+	}
+	if isValid := validateUrl(body.LongUrl); !isValid {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid URL format",
+		})
 		return
 	}
 	shortedUrl, err := s.u.Create(body)
@@ -34,4 +48,13 @@ func (s *ShortenController) Shorten(c *gin.Context) {
 		})
 		return
 	}
+}
+
+func validateUrl(inputUrl string) bool {
+	_, err := url.ParseRequestURI(inputUrl)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	return true
 }

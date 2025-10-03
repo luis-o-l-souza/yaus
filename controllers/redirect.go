@@ -24,6 +24,6 @@ func (r *RedirectController) Redirect(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 			return
 		}
-		c.Redirect(http.StatusPermanentRedirect, "http://"+longUrl.LongUrl)
+		c.Redirect(http.StatusPermanentRedirect, longUrl.LongUrl)
 	}
 }

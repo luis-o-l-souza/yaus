@@ -7,5 +7,5 @@ type UrlMap struct {
 }
 
 type UrlMapPayload struct {
-	LongUrl string `json:"longUrl"`
+	LongUrl string `json:"longUrl" binding:"required"`
 }
